@@ -58,10 +58,13 @@ def retrieve_query(query, k=2):
 # Get QA Chain
 def get_qa_chain():
     prompt_template = """
-    Answer the question as detailed as possible from the provided context, make sure to provide all the details, if the answer is not in
-    provided context just say, "I regret to inform you that I currently lack the necessary data to address your inquiry. Perhaps there's another way I can be of assistance?", don't provide the wrong answer\n\n
-    Context:\n {context}?\n
-    Question: \n{question}\n
+    Answer the question as detailed as possible. First search from the provided context, make sure to provide all the details, if the answer is not in
+    provided context, search in the given list of Previous Messages if the question looks like conversation or a follow-up question. If you still can't find an answer, 
+    just say, "I regret to inform you that I currently lack the necessary data to address your inquiry. Perhaps there's another way I can be of assistance?", 
+    don't provide the wrong answer\n\n
+    Previous Messages:\n{previous_messages}\n
+    Context:\n{context}\n
+    Question:\n{question}\n
 
     Answer:
     """
@@ -73,14 +76,14 @@ def get_qa_chain():
         temperature=0.5
     )
 
-    custom_prompt = PromptTemplate(template = prompt_template, input_variables =["context","question"])
+    custom_prompt = PromptTemplate(template = prompt_template, input_variables =["previous_messages","context","question"])
     qa_chain = load_qa_chain(azure_chat_llm, chain_type="stuff",prompt = custom_prompt)
     return qa_chain
 
 # Search answers in VectorDB
-def retrieve_answers(query):
+def retrieve_answers(previous_messages, query):
     docs = retrieve_query(query)
     chain = get_qa_chain()
     # response = chain.run(input_documents = doc_search, question = query)
-    response = chain.invoke({"input_documents":docs, "question":query}, return_only_outputs = True)
+    response = chain.invoke({"input_documents":docs, "previous_messages":previous_messages, "question":query}, return_only_outputs = True)
     return response

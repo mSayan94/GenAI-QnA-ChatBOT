@@ -1,22 +1,59 @@
 import streamlit as st
 from app import retrieve_answers
 
+def header():
+    header = st.container()
+    header.title("Q&A GenAI BOT")
+    header.write("""<div class='fixed-header'/>""", unsafe_allow_html=True)
+
+    ### Custom CSS for the sticky header
+    st.markdown(
+        """
+    <style>
+        div[data-testid="stVerticalBlock"] div:has(div.fixed-header) {
+            position: sticky;
+            top: 2.875rem;
+            z-index: 999;
+            background: #FFFFFF;
+        }
+        .fixed-header {
+            border-bottom: 1.3px solid;
+        }
+    </style>
+        """,
+        unsafe_allow_html=True
+    )
+
 def run_app():
-    
-    # Set page config and theme
-    st.set_page_config(page_title="GenAI Q&A BOT", layout="wide", initial_sidebar_state="collapsed")
 
-    #Set Page Title   
-    st.title("Q&A GenAI BOT")
+    st.set_page_config(page_title="GenAI Q&A BOT")
+    # st.title("Q&A GenAI BOT")
+    header()
 
-    # Create a text input for the question
-    question = st.text_input("Enter your question:")
-    resp = retrieve_answers(question)
+    # Initialize chat history
+    if "messages" not in st.session_state:
+        st.session_state.messages = []
 
-    # Create a Submit button
-    submit = st.button("Ask the Question")
+    # Display chat messages from history on app rerun
+    for message in st.session_state.messages:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
 
-    # If submit button is clicked
-    if submit:
-        st.subheader("The Response is")
-        st.write(resp["output_text"])
+    # React to user input
+    if prompt := st.chat_input("Enter you Question"):
+
+        # Display user message in chat message container
+        st.chat_message("user").markdown('**You :** <br/><br/>' + prompt, unsafe_allow_html=True)
+
+        # Add user message to chat history
+        st.session_state.messages.append({"role": "user", "content": prompt})
+
+        response_unformatted = retrieve_answers(st.session_state.messages, prompt)
+        response_formatted = response_unformatted["output_text"]
+
+        # Display assistant response in chat message container
+        with st.chat_message("assistant"):
+            st.markdown('**Q&A BOT :** <br/><br/>'+ response_formatted, unsafe_allow_html=True)
+
+        # Add assistant response to chat history
+        st.session_state.messages.append({"role": "assistant", "content": response_formatted})

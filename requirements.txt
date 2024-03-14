@@ -2,7 +2,7 @@ unstructured
 tiktoken
 pinecone-client
 pypdf
-openai==0.28.1
+openai
 langchain-pinecone 
 langchain-openai 
 langchain
